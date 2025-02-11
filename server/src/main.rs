@@ -1,17 +1,15 @@
-use hyper_tls::HttpsConnector;
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex, RwLock};
-use std::net::SocketAddr;
-use std::time::Duration;
-use hyper::{Body, Request, Response, Server, StatusCode};
 use hyper::client::HttpConnector;
 use hyper::server::conn::AddrStream;
 use hyper::service::{make_service_fn, service_fn};
-use serde_json::json;
-use jsonwebtoken::{decode, DecodingKey, Validation, Algorithm, errors::ErrorKind};
+use hyper::{Body, Request, Response, Server, StatusCode};
+use hyper_tls::HttpsConnector;
+use jsonwebtoken::{decode, errors::ErrorKind, Algorithm, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
-
-const SECRET_KEY: &'static str = "secret_key"; // Use a stronger secret in a real-world scenario
+use serde_json::json;
+use std::collections::HashMap;
+use std::net::SocketAddr;
+use std::sync::{Arc, Mutex, RwLock};
+use std::time::Duration;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct ServiceConfig {
@@ -20,7 +18,7 @@ struct ServiceConfig {
 }
 
 struct ServiceRegistry {
-    services: Arc<RwLock<HashMap<String, String>>>,  // Service Name -> Service Address (URL/URI)
+    services: Arc<RwLock<HashMap<String, String>>>, // Service Name -> Service Address (URL/URI)
 }
 
 impl ServiceRegistry {
@@ -46,13 +44,18 @@ impl ServiceRegistry {
     }
 }
 
-async fn register_service(req: Request<Body>, registry: Arc<ServiceRegistry>) -> Result<Response<Body>, hyper::Error> {
+async fn register_service(
+    req: Request<Body>,
+    registry: Arc<ServiceRegistry>,
+) -> Result<Response<Body>, hyper::Error> {
     let body_bytes = hyper::body::to_bytes(req.into_body()).await?;
     let body_str = String::from_utf8_lossy(&body_bytes);
     let parts: Vec<&str> = body_str.split(',').collect();
 
     if parts.len() != 2 {
-        return Ok(Response::new(Body::from("Invalid format. Expecting 'name,address'")));
+        return Ok(Response::new(Body::from(
+            "Invalid format. Expecting 'name,address'",
+        )));
     }
 
     let name = parts[0].to_string();
@@ -63,13 +66,18 @@ async fn register_service(req: Request<Body>, registry: Arc<ServiceRegistry>) ->
     Ok(Response::new(Body::from("Service registered successfully")))
 }
 
-async fn deregister_service(req: Request<Body>, registry: Arc<ServiceRegistry>) -> Result<Response<Body>, hyper::Error> {
+async fn deregister_service(
+    req: Request<Body>,
+    registry: Arc<ServiceRegistry>,
+) -> Result<Response<Body>, hyper::Error> {
     let body_bytes = hyper::body::to_bytes(req.into_body()).await?;
     let name = String::from_utf8_lossy(&body_bytes).to_string();
 
     registry.deregister(&name);
 
-    Ok(Response::new(Body::from("Service deregistered successfully")))
+    Ok(Response::new(Body::from(
+        "Service deregistered successfully",
+    )))
 }
 
 struct RateLimiter {
@@ -86,7 +94,8 @@ impl RateLimiter {
     fn allow(&self, addr: SocketAddr) -> bool {
         let mut visitors = self.visitors.lock().unwrap();
         let counter = visitors.entry(addr).or_insert(0);
-        if *counter >= 5 {  // Allow up to 5 requests
+        if *counter >= 5 {
+            // Allow up to 5 requests
             false
         } else {
             *counter += 1;
@@ -95,26 +104,15 @@ impl RateLimiter {
     }
 }
 
-fn authenticate(token: &str) -> bool {
-    let validation = Validation {
-        iss: Some("my_issuer".to_string()),
-        algorithms: vec![Algorithm::HS256],
-        ..Default::default()
-    };
-
-    match decode::<serde_json::Value>(&token, &DecodingKey::from_secret(SECRET_KEY.as_ref()), &validation) {
-        Ok(_data) => true,
-        Err(err) => {
-            eprintln!("JWT Decoding error: {:?}", err);
-            match *err.kind() {
-                ErrorKind::InvalidToken => false,  // token is invalid
-                _ => false
-            }
-        }
-    }
+fn authenticate(api_key: &str) -> bool {
+    const EXPECTED_API_KEY: &str = "your_api_key_here";
+    api_key == EXPECTED_API_KEY
 }
 
-async fn service_handler(req: Request<Body>, client: &hyper::Client<HttpsConnector<HttpConnector>>) -> Result<Response<Body>, hyper::Error>{
+async fn service_handler(
+    req: Request<Body>,
+    client: &hyper::Client<HttpsConnector<HttpConnector>>,
+) -> Result<Response<Body>, hyper::Error> {
     // Example of request transformation: Adding a custom header
     let req = Request::builder()
         .method(req.method())
@@ -153,7 +151,6 @@ async fn handle_request(
     client: Arc<hyper::Client<HttpsConnector<HttpConnector>>>,
     registry: Arc<ServiceRegistry>,
 ) -> Result<Response<Body>, hyper::Error> {
-
     if !rate_limiter.allow(remote_addr) {
         return Ok(Response::builder()
             .status(StatusCode::TOO_MANY_REQUESTS)
@@ -161,19 +158,23 @@ async fn handle_request(
             .unwrap());
     }
 
-    println!("Received request from {}:{}", remote_addr.ip(), remote_addr.port());
+    println!(
+        "Received request from {}:{}",
+        remote_addr.ip(),
+        remote_addr.port()
+    );
 
-    // Authentication
     match req.headers().get("Authorization") {
         Some(value) => {
-            let token_str = value.to_str().unwrap_or("");
-            if !authenticate(token_str) {
+            let api_key = value.to_str().unwrap_or("");
+            println!("API Key: {}", api_key);
+            if !authenticate(api_key) {
                 return Ok(Response::builder()
                     .status(StatusCode::UNAUTHORIZED)
                     .body(Body::from("Unauthorized"))
                     .unwrap());
             }
-        },
+        }
         None => {
             return Ok(Response::builder()
                 .status(StatusCode::UNAUTHORIZED)
@@ -191,6 +192,10 @@ async fn handle_request(
     }
 
     let service_name = parts[1];
+    println!("Service Name: {}", service_name);
+
+    let endpoint = parts[2..].join("/");
+    println!("Endpoint: {}", endpoint);
 
     match registry.get_address(service_name) {
         Some(address) => {
@@ -201,7 +206,8 @@ async fn handle_request(
             if !address.starts_with("http://") && !address.starts_with("https://") {
                 address = format!("http://{}", address);
             }
-            let forward_uri = format!("{}{}", address, req.uri().path_and_query().map_or("", |x| x.as_str()));
+
+            let forward_uri = format!("{}/{}", address.trim_end_matches('/'), endpoint);
 
             if let Ok(uri) = forward_uri.parse() {
                 *req.uri_mut() = uri;
@@ -211,10 +217,9 @@ async fn handle_request(
 
             // Send the request to the service handler
             service_handler(req, &client).await
-        },
+        }
         None => return Ok(Response::new(Body::from("Service not found"))),
     }
-
 }
 
 async fn router(
@@ -254,14 +259,19 @@ async fn main() {
         let registry_clone = Arc::clone(&registry);
 
         let service = service_fn(move |req| {
-            router(req, remote_addr, Arc::clone(&rate_limiter), Arc::clone(&client), Arc::clone(&registry_clone))
+            router(
+                req,
+                remote_addr,
+                Arc::clone(&rate_limiter),
+                Arc::clone(&client),
+                Arc::clone(&registry_clone),
+            )
         });
 
         async { Ok::<_, hyper::Error>(service) }
     });
 
-
-    let addr = ([127, 0, 0, 1], 8080).into();
+    let addr = ([127, 0, 0, 1], 3030).into();
 
     let server = Server::bind(&addr)
         .http1_keepalive(true)

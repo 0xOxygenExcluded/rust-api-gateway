@@ -4,29 +4,11 @@ use hyper::{Client, Request};
 use hyper_tls::HttpsConnector;
 use serde::{Deserialize, Serialize};
 
-const SECRET_KEY: &'static str = "secret_key";  // Must match the secret in the API Gateway
 
-#[derive(Debug, Serialize, Deserialize)]
-struct Claims {
-    sub: String,
-    iss: String,
-    exp: usize,
-}
+const API_KEY: &'static str = "your_api_key_here";
 
 #[tokio::main]
 async fn main() {
-    let claims = Claims {
-        sub: "1234567890".to_string(),
-        iss: "my_issuer".to_string(),
-        exp: (SystemTime::now() + Duration::from_secs(3600))
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .unwrap()
-            .as_secs() as usize, // Expires in 1 hour
-    };
-
-    let token = encode(&Header::default(), &claims, &EncodingKey::from_secret(SECRET_KEY.as_ref())).unwrap();
-    println!("Token: {}", token);
-
     let client = {
         let https = HttpsConnector::new();
         Client::builder().build::<_, hyper::Body>(https)
@@ -34,8 +16,8 @@ async fn main() {
 
     let request = Request::builder()
         .method("GET")
-        .uri("http://127.0.0.1:8080/hello_service")
-        .header("Authorization", token)
+        .uri("http://127.0.0.1:3030/hello_service")
+        .header("Authorization", API_KEY)
         .body(hyper::Body::empty())
         .expect("Request builder failed.");
 

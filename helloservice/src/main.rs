@@ -3,7 +3,7 @@ use hyper::body::Body;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::client::Client;
 
-static API_GATEWAY_ADDRESS: &str = "http://localhost:8080/register_service";  // Adjust as per your setup
+static API_GATEWAY_ADDRESS: &str = "http://localhost:3030/register_service";  // Adjust as per your setup
 static SERVICE_NAME: &str = "hello_service";
 static SERVICE_ADDRESS: &str = "http://localhost:9090";  // The address where this service runs
 
@@ -36,7 +36,7 @@ async fn main() {
         async { Ok::<_, hyper::Error>(service_fn(handle_hello)) }
     });
 
-    let addr = ([127, 0, 0, 1], 9090).into();  // This service will run on port 9090
+    let addr = ([127, 0, 0, 1], 9090).into();
     let server = Server::bind(&addr).serve(make_svc);
 
     println!("Hello Service running on http://{}", addr);
