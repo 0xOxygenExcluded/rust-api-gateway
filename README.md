@@ -99,9 +99,9 @@ The gateway will start on `http://127.0.0.1:3030`
 
 #### /register-service - add service name and service address into api-gateway
 
-##### "your_api_key_here" - is value of the test API key (it should be changed to more safe)
-##### "some_service_name" - is name of service inner api-gateway
-##### "service_address" - url address where service are hosted 
+1. "your_api_key_here" - is value of the test API key (it should be changed to more safe)
+2. "some_service_name" - is name of service inner api-gateway
+3. "service_address" - url address where service are hosted 
 ```bash
 curl --location 'http://127.0.0.1:3030/register_service' \
 --header 'Content-Type: text/plain' \
@@ -111,7 +111,7 @@ curl --location 'http://127.0.0.1:3030/register_service' \
 
 #### Deregister-service - delete service by its name from api-gateway
 
-##### "some_service_name" - is name of service inner api-gateway
+1. "some_service_name" - is name of service inner api-gateway
 ```bash
 curl --location 'http://127.0.0.1:3030/deregister_service' \
 --header 'Content-Type: text/plain' \
