@@ -36,7 +36,7 @@ async fn main() {
         async { Ok::<_, hyper::Error>(service_fn(handle_hello)) }
     });
 
-    let addr = ([127, 0, 0, 1], 9090).into();
+    let addr = ([127, 0, 0, 1], 9090).into();  // This service will run on port 9090
     let server = Server::bind(&addr).serve(make_svc);
 
     println!("Hello Service running on http://{}", addr);

@@ -3,13 +3,15 @@ use hyper::server::conn::AddrStream;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Request, Response, Server, StatusCode};
 use hyper_tls::HttpsConnector;
-use jsonwebtoken::{decode, errors::ErrorKind, Algorithm, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::Duration;
+use dotenvy::dotenv;
+use std::env;
+
 
 #[derive(Debug, Serialize, Deserialize)]
 struct ServiceConfig {
@@ -53,9 +55,12 @@ async fn register_service(
     let parts: Vec<&str> = body_str.split(',').collect();
 
     if parts.len() != 2 {
-        return Ok(Response::new(Body::from(
-            "Invalid format. Expecting 'name,address'",
-        )));
+        return Ok(Response::builder()
+            .status(StatusCode::BAD_REQUEST)
+            .body(Body::from(
+                "Invalid format. Expecting 'name,address'",
+            ))
+            .unwrap());
     }
 
     let name = parts[0].to_string();
@@ -92,10 +97,13 @@ impl RateLimiter {
     }
 
     fn allow(&self, addr: SocketAddr) -> bool {
+        dotenv().ok();
         let mut visitors = self.visitors.lock().unwrap();
         let counter = visitors.entry(addr).or_insert(0);
-        if *counter >= 5 {
-            // Allow up to 5 requests
+
+        let number_of_requests: u32 = env::var("NUMBER_OF_REQUESTS").unwrap().parse().unwrap();
+
+        if *counter >= number_of_requests {
             false
         } else {
             *counter += 1;
@@ -105,8 +113,9 @@ impl RateLimiter {
 }
 
 fn authenticate(api_key: &str) -> bool {
-    const EXPECTED_API_KEY: &str = "your_api_key_here";
-    api_key == EXPECTED_API_KEY
+    dotenv().ok();
+    let api_key_actual = env::var("API_KEY").expect("API_KEY must be set");
+    api_key == api_key_actual
 }
 
 async fn service_handler(
@@ -212,13 +221,19 @@ async fn handle_request(
             if let Ok(uri) = forward_uri.parse() {
                 *req.uri_mut() = uri;
             } else {
-                return Ok(Response::new(Body::from("Invalid service URI")));
+                return Ok(Response::builder()
+                    .status(StatusCode::BAD_REQUEST)
+                    .body(Body::from("Invalid service URI"))
+                    .unwrap());
             }
 
             // Send the request to the service handler
             service_handler(req, &client).await
         }
-        None => return Ok(Response::new(Body::from("Service not found"))),
+        None => return Ok(Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body(Body::from("Service not found"))
+            .unwrap()),
     }
 }
 
@@ -244,6 +259,12 @@ async fn router(
 }
 #[tokio::main]
 async fn main() {
+
+    dotenv().ok();
+
+    let api_key = env::var("API_KEY").expect("API_KEY must be set");
+    println!("API Key: {}", api_key);
+
     let rate_limiter = Arc::new(RateLimiter::new());
     let https = HttpsConnector::new();
     let client = hyper::Client::builder().build::<_, hyper::Body>(https);
