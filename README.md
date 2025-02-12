@@ -41,6 +41,8 @@ This API Gateway is built in Rust and serves as a foundational layer for directi
 
 - **8. Dynamic Service Registry**
 
+    Makes it possible to register and deregister services in api-gateway, 
+
 ##  Architecture
 
 ```
@@ -79,11 +81,41 @@ git clone https://github.com/miky-rola/api-gateway
 cd api-gateway
 ```
 
-### Register-service
-#### "your_api_key_here" - is actual value of the test API key.
+2. Build the server (api-gateway):
+```bash
+cd server
+cargo build --release
+```
+
+3. Run the gateway:
+```bash
+cargo run --release
+```
+
+The gateway will start on `http://127.0.0.1:3030`
+
+
+### Endpoints
+
+#### /register-service - add service name and service address into api-gateway
+
+##### "your_api_key_here" - is value of the test API key (it should be changed to more safe)
+##### "some_service_name" - is name of service inner api-gateway
+##### "service_address" - url address where service are hosted 
 ```bash
 curl --location 'http://127.0.0.1:3030/register_service' \
 --header 'Content-Type: text/plain' \
 --header 'Authorization: your_api_key_here \
---data 'python_hello_service,http://127.0.0.1:8000'
+--data 'some_service_name,service_address'
 ```
+
+#### Deregister-service - delete service by its name from api-gateway
+
+##### "some_service_name" - is name of service inner api-gateway
+```bash
+curl --location 'http://127.0.0.1:3030/deregister_service' \
+--header 'Content-Type: text/plain' \
+--header 'Authorization: your_api_key_here \
+--data 'some_service_name'
+```
+
