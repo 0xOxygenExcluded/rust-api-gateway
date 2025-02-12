@@ -35,9 +35,8 @@ Features
 
 5. Authentication
 
-    Utilizes JWT-based authentication.
-    Requests must present a valid JWT token in the Authorization header.
-    Validates the token's signature and expected claims.
+    Utilizes API-key authentication.
+    Requests must present a valid API-key in the Authorization header.
 
 6. HTTPS Client
 
