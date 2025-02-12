@@ -1,15 +1,7 @@
 # rust-api-gateway
-A sample API Gateway built in Rust (work in progress) for learning purposes. 
-
-You can follow along by reading the tutorial articles:
-
-Part 1: [Implementing a Fully Functional API Gateway in Rust]: (https://medium.com/dev-genius/implementing-a-fully-functional-api-gateway-in-rust-part-1-0eb1d9e8b08e)
-
-Part 2: [Implementing a Dynamic Service Registration] (https://medium.com/@luishrsoares/implementing-a-fully-functional-api-gateway-in-rust-part-ii-dynamic-service-registry-b442728316c5)
+A sample API Gateway built in Rust
 
 This API Gateway is built in Rust and serves as a foundational layer for directing incoming HTTP requests to appropriate services, along with providing several essential features for improving security, observability, and control.
-
-This first version is a rudimentary implementation upon which we will build new features along with tutorials in my Blog at www.luissoares.tech and https://medium.com/@luishrsoares
 
 Table of Contents
 
