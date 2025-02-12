@@ -3,13 +3,6 @@ A sample API Gateway built in Rust
 
 This API Gateway is built in Rust and serves as a foundational layer for directing incoming HTTP requests to appropriate services, along with providing several essential features for improving security, observability, and control.
 
-Table of Contents
-
-Features
-Setup and Installation
-Usage
-Future Enhancements
-
 Features
 
 1. Routing
