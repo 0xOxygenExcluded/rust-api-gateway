@@ -73,27 +73,6 @@ rust-api-gateway/
 - Rust 1.75 or higher
 - Cargo package manager
 
-### Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/miky-rola/api-gateway
-cd api-gateway
-```
-
-2. Build the server (api-gateway):
-```bash
-cd server
-cargo build --release
-```
-
-3. Run the gateway:
-```bash
-cargo run --release
-```
-
-The gateway will start on `http://127.0.0.1:3030`
-
 
 ### Endpoints
 
@@ -118,4 +97,33 @@ curl --location 'http://127.0.0.1:3030/deregister_service' \
 --header 'Authorization: your_api_key_here \
 --data 'some_service_name'
 ```
+
+### How to use 
+1. Clone the repository:
+```bash
+git clone https://github.com/miky-rola/api-gateway
+cd api-gateway
+```
+
+2. Configure .env file
+```bash
+API_KEY=""
+NUMBER_OF_REQUESTS=""
+```
+
+3. Build the server (api-gateway):
+```bash
+cd server
+cargo build --release
+```
+
+4. Run the gateway:
+```bash
+cargo run --release
+```
+
+The gateway will start on `http://127.0.0.1:3030`
+
+To check functionality of api-gateway you may use "helloservice" and "client" scripts. 
+To test api-gateway repeat same steps in "How to use" section, but into helloservice/ and client/ directories or you can use your own service.
 
