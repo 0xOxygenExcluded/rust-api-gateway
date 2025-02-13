@@ -236,9 +236,9 @@ async fn handle_request(
 
     println!("Path: {}", path);
 
-    // let uri = req.uri();
+    let uri = req.uri();
 
-    // println!("URI: {}", uri);
+    println!("URI: {}", uri);
 
     // Let's assume the first path segment is the service name.
     let parts: Vec<&str> = path.split('/').collect();
@@ -246,16 +246,34 @@ async fn handle_request(
         return Ok(Response::new(Body::from("Invalid request URI")));
     }
 
-    let service_name = parts[1];
+    let mut endpoint = "".to_string();
+    let mut service_name = parts[1].to_string();
     println!("Service Name: {}", service_name);
 
-    // let endpoint = parts[2..].join("/");
-    let endpoint = if parts.len() > 2 {
-        parts[2..].join("/")
-    } else {
-        "".to_string()
-    };
+    // if service name is not found in registry then endpoint is all of parts
+    let services = registry.services.read().await;
+    for (name, addr) in services.iter() {
+        if name != &service_name {
+            endpoint = parts[1..].join("/");
+            service_name = "".to_string();
+            break;
+        };
+    }
+
+    println!("Service_name after searching in registry: {}", service_name);
+
+    if endpoint == "" {
+        endpoint = parts[2..].join("/");
+    }
+
+    // let endpoint = if parts.len() > 2 {
+    //     parts[2..].join("/")
+    // } else {
+    //     "".to_string()
+    // };
     println!("Endpoint: {}", endpoint);
+
+
 
     if endpoint == "docs" {
         client_context.lock().await.insert(remote_addr, service_name.to_string());
@@ -263,6 +281,8 @@ async fn handle_request(
 
     if path == "/openapi.json" {
         if let Some(service_name) = client_context.lock().await.get(&remote_addr) {
+            println!("Service Name in openapi.json: {}", service_name);
+
             if let Some(address) = registry.services.read().await.get(service_name) {
                 let forward_uri = format!("{}/openapi.json", address.trim_end_matches('/'));
 
@@ -284,7 +304,37 @@ async fn handle_request(
             .unwrap());
     }
 
-    match registry.get_address(service_name).await {
+    println!("Remote Address before getting service name: {}", &remote_addr);
+
+    if service_name == "" {
+        service_name = {
+            let context = client_context.lock().await;
+            context.get(&remote_addr).cloned().unwrap_or("".to_string())
+        };
+
+        println!("Service Name in handle_request to endpoint: {}", &service_name);
+
+            if let Some(address) = registry.services.read().await.get(&service_name) {
+                let forward_uri = format!("{}/{}", address.trim_end_matches('/'), endpoint);
+
+                if let Ok(uri) = forward_uri.parse() {
+                    *req.uri_mut() = uri;
+                } else {
+                    return Ok(Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(Body::from("Invalid service URI"))
+                        .unwrap());
+                }
+
+                return service_handler(req, &client).await;
+            }
+            return Ok(Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body(Body::from("Service not found"))
+            .unwrap());
+        }
+
+    match registry.get_address(&service_name).await {
         Some(address) => {
             // Here, use the address to forward the request.
 
