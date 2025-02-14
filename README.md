@@ -130,5 +130,5 @@ To test api-gateway repeat same steps in ["How to use"](#how-to-use) section, bu
 If you want to use your own service to test api-gateway, you should follow these steps:
  1. Run api-gateway by repeating steps from ["How to use"](#how-to-use) section
  2. Run your own service
- 3. Register service in api-gateway with [/register_service endpoint](#/register-service-add-service-name-and-service-address-into-api-gateway)
- 4. 
+ 3. Register service in api-gateway with [/register_service endpoint](#register-service---add-service-name-and-service-address-into-api-gateway) (service_name, service_address)
+ 4. Send request to address-api-gateway/service_name/endpoint
