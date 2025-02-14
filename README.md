@@ -127,3 +127,5 @@ The gateway will start on `http://127.0.0.1:3030`
 To check functionality of api-gateway you may use "helloservice" and "client" scripts. 
 To test api-gateway repeat same steps in "How to use" section, but into helloservice/ and client/ directories or you can use your own service.
 
+If you want to use your own service to test api-gateway, you should follow these steps:
+ 1. Repeat steps from ["How to use"](How to use) section
