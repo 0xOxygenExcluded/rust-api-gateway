@@ -88,7 +88,7 @@ curl --location 'http://127.0.0.1:3030/register_service' \
 --data 'some_service_name,service_address'
 ```
 
-#### Deregister-service - delete service by its name from api-gateway
+#### /deregister-service - delete service by its name from api-gateway
 
 1. "some_service_name" - is name of service inner api-gateway
 ```bash
@@ -125,8 +125,10 @@ cargo run --release
 The gateway will start on `http://127.0.0.1:3030`
 
 To check functionality of api-gateway you may use "helloservice" and "client" scripts. 
-To test api-gateway repeat same steps in "How to use" section, but into helloservice/ and client/ directories or you can use your own service.
+To test api-gateway repeat same steps in ["How to use"](#how-to-use) section, but into helloservice/ and client/ directories or you can use your own service.
 
 If you want to use your own service to test api-gateway, you should follow these steps:
- 1. Repeat steps from ["How to use"](###How-to-use) section
- 2. 
+ 1. Run api-gateway by repeating steps from ["How to use"](#how-to-use) section
+ 2. Run your own service
+ 3. Register service in api-gateway with [/register_service endpoint](#/register-service-add-service-name-and-service-address-into-api-gateway)
+ 4. 
